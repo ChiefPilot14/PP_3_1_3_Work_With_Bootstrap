@@ -201,8 +201,10 @@
                                 <span class="fw-bold">Role</span>
                                 <ul class="list-group list-group-flush" id="role-list">
                                     <li class="list-group-item" th:each="role : ${allRoles}"
-                                        th:id="'role-' + ${role.id}" th:text="${role.name}" onclick="selectRole(this);"
-                                        th:attr="data-role-id=${role.id}"></li>
+                                        th:id="'role-' + ${role.id}"
+                                        th:text="${role.name}"
+                                        th:attr="data-role-id=${role.id}"
+                                        onclick="toggleRoleSelection(this);"></li>
                                 </ul>
                             </div>
                             <div class="mb-3 text-center">
@@ -258,10 +260,14 @@
                                 <input type="password" class="form-control" id="editPassword" name="user.password">
                             </div>
                             <div class="mb-3 text-center">
-                                <label class="form-label fw-bold">Role</label>
-                                <div id="editRoles">
-                                    <!-- Роли будут добавлены динамически -->
-                                </div>
+                                <span class="fw-bold">Role</span>
+                                <ul class="list-group list-group-flush" id="edit-role-list">
+                                    <li class="list-group-item" th:each="role : ${allRoles}"
+                                        th:id="'role-' + ${role.id}"
+                                        th:text="${role.name}"
+                                        th:attr="data-role-id=${role.id}"
+                                        onclick="toggleRoleSelection(this);"></li>
+                                </ul>
                             </div>
                         </form>
                     </div>
@@ -367,30 +373,29 @@
 </script>
 <script>
     // Регистрация нового юзера
-    // Функция для выбора роли
-    function selectRole(element) {
-        const selectedRole = element.dataset.roleId;
-        const roleInputs = document.querySelectorAll('#role-list input[type="hidden"]');
+    // Функция для переключения выделения роли
+    function toggleRoleSelection(element) {
+        // Переключаем класс active
+        element.classList.toggle('active');
+    }
 
-        // Очистка предыдущих выборов
-        roleInputs.forEach(input => {
-            input.value = '';
+    // Обработчик отправки формы
+    document.querySelector('form').addEventListener('submit', function(event) {
+        // Собираем все выбранные роли
+        const selectedRoles = [];
+        document.querySelectorAll('#role-list .list-group-item.active').forEach(item => {
+            selectedRoles.push(item.dataset.roleId);
         });
 
-        // Установка значения выбранного элемента
-        const hiddenInput = document.createElement('input');
-        hiddenInput.type = 'hidden';
-        hiddenInput.name = 'selectedRole';
-        hiddenInput.value = selectedRole;
-        document.getElementById('role-list').appendChild(hiddenInput);
-
-        // Удаление активного состояния со всех элементов
-        const items = document.querySelectorAll('.list-group-item');
-        items.forEach(item => item.classList.remove('active'));
-
-        // Добавление активного состояния к выбранному элементу
-        element.classList.add('active');
-    }
+        // Создаем скрытое поле для каждой выбранной роли
+        selectedRoles.forEach(roleId => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'selectedRoles';
+            hiddenInput.value = roleId;
+            document.getElementById('role-list').appendChild(hiddenInput);
+        });
+    });
 </script>
 <script>
     // Функция для открытия модального окна редактирования и заполнения его данными пользователя
@@ -403,29 +408,6 @@
         document.getElementById('editAge').value = user.age;
         document.getElementById('editEmail').value = user.email;
         document.getElementById('editUsername').value = user.username;
-
-        // Очищаем предыдущие роли
-        const rolesContainer = document.getElementById('editRoles');
-        rolesContainer.innerHTML = '';
-
-        // Добавляем роли
-        roles.forEach(role => {
-            const roleItem = document.createElement('a');
-            roleItem.href = '#'; // Это для того, чтобы элемент выглядел как ссылка, но при этом ничего не делал
-            roleItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
-
-            if (user.roles.includes(role)) {
-                roleItem.classList.add('active'); // Выделяем активную роль
-            }
-
-            roleItem.textContent = role.name;
-            roleItem.dataset.roleId = role.id;
-            // Добавляем обработчик события onclick
-            roleItem.onclick = function () {
-                selectRole(this);
-            };
-            rolesContainer.appendChild(roleItem);
-        });
 
 // Открываем модальное окно
         const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
@@ -502,7 +484,7 @@
             password: formData.get('user.password')
         };
 
-        const roleItems = document.querySelectorAll('#editRoles .list-group-item.active');
+        const roleItems = document.querySelectorAll('#edit-role-list .list-group-item.active');
         const roleIds = [];
 
         roleItems.forEach(item => {
@@ -529,7 +511,7 @@
             })
             .then(data => {
 
-                // alert('Пользователь успешно обновлен!');
+
 
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
                 modal.hide();
@@ -557,7 +539,7 @@
                 return response.text();
             })
             .then(data => {
-                // alert('Пользователь успешно удален!');
+
 
                 const modal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
                 modal.hide();

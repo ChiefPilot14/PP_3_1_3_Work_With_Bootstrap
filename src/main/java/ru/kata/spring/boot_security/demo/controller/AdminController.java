@@ -78,7 +78,7 @@ public class AdminController {
 @PostMapping("/registration")
 public String registerUser(@Valid @ModelAttribute("user") User user,
                            BindingResult bindingResult,
-                           Model model, @RequestParam(value = "selectedRole", required = false) Long[] rolesIds) {
+                           Model model, @RequestParam(value = "selectedRoles", required = false) Long[] rolesIds) {
 
     if (bindingResult.hasErrors()) {
         model.addAttribute("errorMessage", "Пожалуйста, заполните форму корректно.");
